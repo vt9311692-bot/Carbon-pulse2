@@ -12,7 +12,7 @@ st.set_page_config(
     page_title="CarbonPulse - Carbon Footprint Tracker",
     page_icon="🌱",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 DB_FILE = "carbonpulse.db"
@@ -388,14 +388,38 @@ with col_toggle:
 
 st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
 
-# Show Guest Mode banner if not logged in
+# Show Guest Mode banner and inline auth if not logged in
 if not st.session_state.user:
     st.markdown(
-        '<div style="background: rgba(217, 119, 6, 0.08); border: 1px solid rgba(217, 119, 6, 0.2); border-radius: 6px; padding: 10px 15px; font-size: 11px; color: #D97706; margin-bottom: 15px;">'
-        '<strong>Guest Mode:</strong> Calculations are saved locally in this session. <strong>Sign In</strong> in the sidebar to persist your carbon footprint history to your private ledger.'
+        '<div style="background: rgba(217, 119, 6, 0.08); border: 1px solid rgba(217, 119, 6, 0.2); border-radius: 6px; padding: 10px 15px; font-size: 11px; color: #D97706; margin-bottom: 8px;">'
+        '<strong>Guest Mode:</strong> Calculations are saved locally in this session. Sign in below or in the sidebar to persist calculations to your private ledger.'
         '</div>',
         unsafe_allow_html=True
     )
+    with st.expander("🔑 **Click here to Sign In or Create Account**", expanded=False):
+        auth_action = st.radio("Choose Action", ["Sign In", "Register"], key="main_auth_action", horizontal=True)
+        with st.form("main_auth_form", clear_on_submit=True):
+            email_input = st.text_input("Email", placeholder="you@example.com", key="main_email")
+            password_input = st.text_input("Password", type="password", placeholder="••••••", key="main_password")
+            submit_btn = st.form_submit_button(auth_action, use_container_width=True)
+            
+            if submit_btn:
+                if auth_action == "Sign In":
+                    success, res = login_user(email_input, password_input)
+                    if success:
+                        st.session_state.user = res
+                        st.success("Successfully logged in!")
+                        st.rerun()
+                    else:
+                        st.error(res)
+                else:
+                    success, res = register_user(email_input, password_input)
+                    if success:
+                        st.session_state.user = res
+                        st.success("Account created successfully!")
+                        st.rerun()
+                    else:
+                        st.error(res)
 else:
     st.markdown(
         f'<div style="background: rgba(5, 150, 105, 0.08); border: 1px solid rgba(5, 150, 105, 0.2); border-radius: 6px; padding: 10px 15px; font-size: 11px; color: #059669; margin-bottom: 15px;">'
